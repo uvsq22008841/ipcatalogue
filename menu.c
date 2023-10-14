@@ -36,8 +36,8 @@ int main(){
         switch(choix){
 
             case 1: {ajouter()  ; break;}
-            case 2: {voir_struct(fic);; break;}
-            case 3: {printf("au revoir\n")  ; break;}
+            case 2: {voir_struct(fic); break;}
+            case 3: {filtrer(fic); break;}
             case 4: {printf("au revoir\n")  ; break;}
             case 5: {  printf("au revoir\n"); break;}
             case 6: { printf("au revoir\n") ; break;}
