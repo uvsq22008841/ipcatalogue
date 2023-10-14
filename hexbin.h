@@ -112,7 +112,7 @@ void ecrire_struct(FILE* fic, Ip_conv ip){
         exit(1);
     }
 
-    fprintf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n",
+    fprintf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n\n",
     ip.octet_dec[0], ip.octet_dec[1],ip.octet_dec[2], ip.octet_dec[3],
     ip.octet_bin[0], ip.octet_bin[1], ip.octet_bin[2], ip.octet_bin[3], ip.octet_hex[0],
     ip.octet_hex[1], ip.octet_hex[2], ip.octet_hex[3], ip.octet_masque[0],
@@ -250,7 +250,7 @@ void filtrer(){
         printf("Pas de fichier à ce nom !");
         exit(1);
     }
-
+    
     int caractere;
     if((caractere = fgetc(fic)) == EOF) {
         printf("\nLe catalogue d'adresse IP est vide! \n");
@@ -262,55 +262,61 @@ void filtrer(){
     if (scanf("%u.%u.%u.%u", &ip3.octet_dec[0], &ip3.octet_dec[1], &ip3.octet_dec[2], &ip3.octet_dec[3]) == 4 && isValidIPv4(ip3.octet_dec)) {
 
    
-    printf("Entrez le masque sous-reseau sous la forme : XXX.XXX.XXX.XXX\n");
-    // && isValidMask(ip3.octet_masque)
-    if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_dec)) {
-        
-        rewind(fic);
-        while(!feof(fic)){
-    
-        fscanf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d\n\n",
-        &ip.octet_dec[0],&ip.octet_dec[1],&ip.octet_dec[2],&ip.octet_dec[3],
-        &ip.octet_bin[0],&ip.octet_bin[1],&ip.octet_bin[2],&ip.octet_bin[3],
-        ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
-        &ip.octet_masque[0]);
-        // && ip.octet_dec[0] == ip3.octet_dec[0]
-        if(ip.octet_masque[0] == ip3.octet_masque[0]  ){
-            if (ip3.octet_dec[0] >= 1 && ip3.octet_dec[0]  <= 126){
-                if (ip.octet_dec[0] >= 1 && ip.octet_dec[0]  <= 126){
+        printf("Entrez le masque sous-reseau sous la forme : XXX.XXX.XXX.XXX\n");
+        // && isValidMask(ip3.octet_masque)
+        if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_dec)) {
+            
+            ip3.cidr = maskArrayToCIDR( ip3.octet_masque) ;
+            // METTRE le pointeur au debut du fichier 
+            rewind(fic);
+            
+            while(!feof(fic)){
+            
+                fscanf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n",
+                &ip.octet_dec[0],&ip.octet_dec[1],&ip.octet_dec[2],&ip.octet_dec[3],
+                &ip.octet_bin[0],&ip.octet_bin[1],&ip.octet_bin[2],&ip.octet_bin[3],
+                ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
+                &ip.octet_masque[0],&ip.octet_masque[1], &ip.octet_masque[2], &ip.octet_masque[3], &ip.cidr);
+
+                // && ip.octet_dec[0] == ip3.octet_dec[0]
+                if(ip.cidr == ip3.cidr  ){
                     
                     printf("Adresse IP %d : ", compteur);
-                    printf("%d.%d.%d.%d\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3]);
-                    compteur++;
-                }
-            }
-            else if (ip3.octet_dec[0] >= 128 && ip3.octet_dec[0] <= 191){
-                if (ip.octet_dec[0] >= 128 && ip.octet_dec[0] <= 191){
-                    int compteur = 1;
-                    printf("Adresse IP %d : ", compteur);
-                    printf("%d.%d.%d.%d\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3]);
-                    compteur++;
-                }
-            }
-            else if (ip3.octet_dec[0] >= 192 && ip3.octet_dec[0] <= 223){
-                if (ip.octet_dec[0] >= 192 && ip.octet_dec[0] <= 223){
-                    int compteur = 1;
-                    printf("Adresse IP %d : ", compteur);
-                    printf("%d.%d.%d.%d\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3]);
-                    compteur++;
-                }
-            }
-            // printf(" voici les adresses trouvees avec les filtres: \n");
-            // printf(" %d.%d.%d.%d",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3]);
+                    printf("%d.%d.%d.%d /%d\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3],ip.cidr);
 
+                    compteur++;                    
+                            
+                }
+                
+
+            }
+        
         }
-        }
-    
-    }
     }
 
 }
 
+        //     else if (ip3.octet_dec[0] >= 128 && ip3.octet_dec[0] <= 191){
+        //         if (ip.octet_dec[0] >= 128 && ip.octet_dec[0] <= 191){
+        //             int compteur = 1;
+        //             printf("Adresse IP %d : ", compteur);
+        //             printf("%d.%d.%d.%d\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3]);
+        //             compteur++;
+        //         }
+        //     }
+        //     else if (ip3.octet_dec[0] >= 192 && ip3.octet_dec[0] <= 223){
+        //         if (ip.octet_dec[0] >= 192 && ip.octet_dec[0] <= 223){
+        //             int compteur = 1;
+        //             printf("Adresse IP %d : ", compteur);
+        //             printf("%d.%d.%d.%d\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3]);
+        //             compteur++;
+        //         }
+        //     }
+        //     // printf(" voici les adresses trouvees avec les filtres: \n");
+        //     // printf(" %d.%d.%d.%d",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3]);
+
+        // }
+        
 
 int isClassABC(int ip[]) {
     int firstOctet = ip[0];
