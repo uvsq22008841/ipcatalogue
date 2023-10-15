@@ -288,7 +288,7 @@ void filtrer(){
    
         printf("Entrez le masque sous-reseau sous la forme : XXX.XXX.XXX.XXX\n");
         // && isValidMask(ip3.octet_masque)
-        if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_dec)) {
+        if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_masque)) {
             
             ip3.cidr = maskArrayToCIDR( ip3.octet_masque) ;
             // METTRE le pointeur au debut du fichier 
@@ -326,6 +326,9 @@ void filtrer(){
         }else {
              printf("Masque invalide. Veuillez reessayer.\n");
         }
+    }else {
+        printf("Adresse IPv4 invalide. Veuillez reessayer.\n");
+        printf("Adresse IPv4 invalide ou n'appartient pas à la classe A, B ou C. Veuillez reessayer.\n");
     }
 
 }
