@@ -323,6 +323,8 @@ void filtrer(){
 
             }
         
+        }else {
+             printf("Masque invalide. Veuillez reessayer.\n");
         }
     }
 
@@ -374,6 +376,9 @@ int binaire_Compaire(Ip_conv ip, Ip_conv ip3, int cidr, int octet){
         }
 
         
+    }else {
+    printf("Adresse IPv4 invalide. Veuillez reessayer.\n");
+    printf("Adresse IPv4 invalide ou n'appartient pas à la classe A, B ou C. Veuillez reessayer.\n");
     }
 }
 
