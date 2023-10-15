@@ -25,7 +25,6 @@ int main(){
         printf(" 1- Ajouter une nouvelle adresse IP\n ");
         printf("2- Afficher le catalogue\n");
         printf(" 3- Filtrer par masque sous-reseau \n");
-        printf(" 4- Supprimer une adresse IP\n");
         printf(" 0- Quitter\n\n");
         
         // choix user

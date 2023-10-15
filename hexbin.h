@@ -11,12 +11,17 @@ struct Ip_conv
     char octet_hex[4][3]; 
     int octet_masque[4];
     int cidr;
+    char ipClass;
+    char type;
+
 };
 typedef struct Ip_conv Ip_conv;
 
 int isValidIPv4(int ip[]);
 int isValidMask(int ip[]);
 int binaire_Compaire(Ip_conv ip, Ip_conv ip3, int cidr, int octet);
+char classifyIPAddress(int ip[]);
+char classifyIPClass(int ip[]);
 
 
 
@@ -195,7 +200,9 @@ if (scanf("%u.%u.%u.%u", &ip3.octet_dec[0], &ip3.octet_dec[1], &ip3.octet_dec[2]
     printf("Entrez le masque sous-reseau sous la forme : XXX.XXX.XXX.XXX\n");
     if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_masque)) {
         
-        ip3.cidr = maskArrayToCIDR( ip3.octet_masque) ;
+        ip3.cidr = maskArrayToCIDR( ip3.octet_masque);
+        ip3.ipClass = classifyIPClass(ip3.octet_dec);
+        ip3.type = classifyIPAddress(ip3.octet_dec); 
         while (getchar() != '\n'); // Nettoie le buffer d'entrée
         
         for (int i = 0; i < 4; i++) {
@@ -217,6 +224,17 @@ if (scanf("%u.%u.%u.%u", &ip3.octet_dec[0], &ip3.octet_dec[1], &ip3.octet_dec[2]
         printf(" Binaire: %08d.%08d.%08d.%08d\n", ip3.octet_bin[0], ip3.octet_bin[1], ip3.octet_bin[2], ip3.octet_bin[3]);
         printf(" Hexadecimale: %02s.%02s.%02s.%02s\n", ip3.octet_hex[0], ip3.octet_hex[1], ip3.octet_hex[2], ip3.octet_hex[3]);
         printf(" Masque: %d.%d.%d.%d\n", ip3.octet_masque[0], ip3.octet_masque[1], ip3.octet_masque[2], ip3.octet_masque[3]);
+        printf(" Classe: %c\n", ip3.ipClass);
+        if (ip3.type == 'P') {
+            printf("Adresse IP privee\n");
+        } else if (ip3.type == 'L') {
+            printf("Adresse IP speciale \n");
+        } else if (ip3.type == 'O') {
+            printf("Adresse IP publique\n");
+        } else {
+            printf("Non définie\n");
+        }
+
                     
     }
     else{
@@ -364,7 +382,7 @@ int binaire_Compaire(Ip_conv ip, Ip_conv ip3, int cidr, int octet){
 
 int isClassABC(int ip[]) {
     int firstOctet = ip[0];
-    return (firstOctet >= 1 && firstOctet <= 126) ||  // Classe A
+    return (firstOctet >= 0 && firstOctet <= 127) ||  // Classe A
            (firstOctet >= 128 && firstOctet <= 191) ||  // Classe B
            (firstOctet >= 192 && firstOctet <= 223);    // Classe C
 }
@@ -387,12 +405,74 @@ int isValidIPv4(int ip[]) {
 }
 
 int isValidMask(int ip[]) {
-    for (int i = 0; i < 4; i++) {
-        if (!isValidOctet(ip[i])) {
-            return 0; // Adresse invalide si un octet est invalide
+    // Tableau de masques de sous-réseau valides pour les classes A, B et C
+    int validMasks[][4] = {
+        {255, 0, 0, 0},    // /8 - Classe A
+        {255, 128, 0, 0},  // /9 - Classe A
+        {255, 192, 0, 0},  // /10 - Classe A
+        {255, 224, 0, 0},  // /11 - Classe A
+        {255, 240, 0, 0},  // /12 - Classe A
+        {255, 248, 0, 0},  // /13 - Classe A
+        {255, 252, 0, 0},  // /14 - Classe A
+        {255, 254, 0, 0},  // /15 - Classe A
+        {255, 255, 0, 0},  // /16 - Classe B
+        {255, 255, 128, 0},  // /17 - Classe B
+        {255, 255, 192, 0},  // /18 - Classe B
+        {255, 255, 224, 0},  // /19 - Classe B
+        {255, 255, 240, 0},  // /20 - Classe B
+        {255, 255, 248, 0},  // /21 - Classe B
+        {255, 255, 252, 0},  // /22 - Classe B
+        {255, 255, 254, 0},  // /23 - Classe B
+        {255, 255, 255, 0},  // /24 - Classe C
+        {255, 255, 255, 128},  // /25 - Classe C
+        {255, 255, 255, 192},  // /26 - Classe C
+        {255, 255, 255, 224},  // /27 - Classe C
+        {255, 255, 255, 240},  // /28 - Classe C
+        {255, 255, 255, 248},  // /29 - Classe C
+        {255, 255, 255, 252}   // /30 - Classe C
+    };
+
+    for (int i = 0; i < sizeof(validMasks) / sizeof(validMasks[0]); i++) {
+        if (ip[0] == validMasks[i][0] &&
+            ip[1] == validMasks[i][1] &&
+            ip[2] == validMasks[i][2] &&
+            ip[3] == validMasks[i][3]) {
+            return 1; // Le masque est valide
         }
     }
-    return 1;
+
+    return 0; // Le masque n'est pas valide
+}
+
+
+char classifyIPAddress(int ip[]) {
+    if ((ip[0] == 10) ||
+        (ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31) ||
+        (ip[0] == 192 && ip[1] == 168)) {
+        return 'P'; // Adresse IP privée
+    } else if (ip[0] == 0 || ip[0] == 127) {
+        return 'L'; // Adresse IP spéciale (Loopback)
+    } else {
+        return 'O'; // Adresse IP publique
+    }
+}
+
+char classifyIPClass(int ip[]) {
+    int firstOctet = ip[0];
+
+    if (firstOctet >= 1 && firstOctet <= 126) {
+        return 'A'; // Classe A
+    } else if (firstOctet >= 128 && firstOctet <= 191) {
+        return 'B'; // Classe B
+    } else if (firstOctet >= 192 && firstOctet <= 223) {
+        return 'C'; // Classe C
+    } else if (firstOctet >= 224 && firstOctet <= 239) {
+        return 'D'; // Classe D (multicast)
+    } else if (firstOctet >= 240 && firstOctet <= 255) {
+        return 'E'; // Classe E (réservée)
+    } else {
+        return 'X'; // Non définie
+    }
 }
 
 
