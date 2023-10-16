@@ -323,8 +323,12 @@ void filtrer(){
                 
                     
                     if(res == 1){
-                        printf("Adresse IP %d : ", compteur);
-                        printf("%d.%d.%d.%d /%d\nType:%c\n\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3],ip.cidr,ip.type);
+                        printf("Adresse IP %d :\n ", compteur);
+                        printf("IPV4: %d.%d.%d.%d /%d\nBinaire: %08d.%08d.%08d.%08d\nHexadecimale: %02s.%02s.%02s.%02s\nMasque: %d.%d.%d.%d\n\n",
+                        ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3],ip.cidr,
+                        ip.octet_bin[0],ip.octet_bin[1],ip.octet_bin[2],ip.octet_bin[3],
+                        ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
+                        ip.octet_masque[0],ip.octet_masque[1], ip.octet_masque[2], ip.octet_masque[3]);
                         compteur++;
                     }          
                 }
