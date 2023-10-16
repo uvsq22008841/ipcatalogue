@@ -22,6 +22,18 @@ int isValidMask(int ip[]);
 int binaire_Compaire(Ip_conv ip, Ip_conv ip3, int cidr, int octet);
 char classifyIPAddress(int ip[]);
 char classifyIPClass(int ip[]);
+int binaire(int nb, Ip_conv ip, int oct_bin);
+char* hexa(int nb);
+int maskArrayToCIDR(int masque[]);
+void ecrire_struct(FILE* fic, Ip_conv ip);
+void voir_struct(FILE* fic);
+int ajouter();
+void filtrer();
+char classifyIPAddress(int ip[]);
+int isClassABC(int ip[]);
+int isValidOctet(int octet);
+int isValidIPv4(int ip[]) ;
+char classifyIPClass(int ip[]);
 
 
 
@@ -98,7 +110,6 @@ int maskArrayToCIDR(int masque[]) {
 
     for (int i = 0; i < 4; i++) {
         unsigned int octet = masque[i];
-        
         // Compter les bits à 1 dans l'octet
         while (octet) {
             cidr += octet & 1;
@@ -119,11 +130,11 @@ void ecrire_struct(FILE* fic, Ip_conv ip){
         exit(1);
     }
 
-    fprintf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n\n",
+    fprintf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n%c\n",
     ip.octet_dec[0], ip.octet_dec[1],ip.octet_dec[2], ip.octet_dec[3],
     ip.octet_bin[0], ip.octet_bin[1], ip.octet_bin[2], ip.octet_bin[3], ip.octet_hex[0],
     ip.octet_hex[1], ip.octet_hex[2], ip.octet_hex[3], ip.octet_masque[0],
-    ip.octet_masque[1], ip.octet_masque[2], ip.octet_masque[3],ip.cidr);
+    ip.octet_masque[1], ip.octet_masque[2], ip.octet_masque[3],ip.cidr,ip.type);
 
 
     fclose(fic);
@@ -152,28 +163,29 @@ void voir_struct(FILE* fic){
     rewind(fic);
     while(!feof(fic)){
     
-    fscanf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n",
-    &ip.octet_dec[0],&ip.octet_dec[1],&ip.octet_dec[2],&ip.octet_dec[3],
-    &ip.octet_bin[0],&ip.octet_bin[1],&ip.octet_bin[2],&ip.octet_bin[3],
-    ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
-    &ip.octet_masque[0],&ip.octet_masque[1], &ip.octet_masque[2], &ip.octet_masque[3], &ip.cidr);
+        fscanf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n%c\n",
+        &ip.octet_dec[0],&ip.octet_dec[1],&ip.octet_dec[2],&ip.octet_dec[3],
+        &ip.octet_bin[0],&ip.octet_bin[1],&ip.octet_bin[2],&ip.octet_bin[3],
+        ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
+        &ip.octet_masque[0],&ip.octet_masque[1], &ip.octet_masque[2], &ip.octet_masque[3], &ip.cidr,&ip.type);
+    
+        
+        
+        
+        printf("* Adresse IP %d :\n\n", compteur);
+     
+        printf("- %d.%d.%d.%d /%d\n- %08d.%08d.%08d.%08d\n- %02s.%02s.%02s.%02s\nMasque: %d.%d.%d.%d\nType: %c\n\n",
+        ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3],ip.cidr,
+        ip.octet_bin[0],ip.octet_bin[1],ip.octet_bin[2],ip.octet_bin[3],
+        ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
+        ip.octet_masque[0],ip.octet_masque[1], ip.octet_masque[2], ip.octet_masque[3],ip.type);
+
+        compteur++;
+    }
+
+    fclose(fic);
 
     
-    
-    
-    printf("* Adresse IP %d :\n\n", compteur);
-
-    printf("- %d.%d.%d.%d /%d\n- %08d.%08d.%08d.%08d\n- %02s.%02s.%02s.%02s\nMasque: %d.%d.%d.%d\n\n",
-    ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3],ip.cidr,
-    ip.octet_bin[0],ip.octet_bin[1],ip.octet_bin[2],ip.octet_bin[3],
-    ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
-    ip.octet_masque[0],ip.octet_masque[1], ip.octet_masque[2], ip.octet_masque[3] );
-
-    compteur++;
-}
-
-
-fclose(fic);    
 }
 
 // Ajouter une adresse IP
@@ -191,67 +203,65 @@ int ajouter() {
 
 
     printf("Entrez une adresse IPv4 decimale sous la forme : XXX.XXX.XXX.XXX\n");
-    
-   
 
-if (scanf("%u.%u.%u.%u", &ip3.octet_dec[0], &ip3.octet_dec[1], &ip3.octet_dec[2], &ip3.octet_dec[3]) == 4 && isValidIPv4(ip3.octet_dec)) {
+    if (scanf("%u.%u.%u.%u", &ip3.octet_dec[0], &ip3.octet_dec[1], &ip3.octet_dec[2], &ip3.octet_dec[3]) == 4 && isValidIPv4(ip3.octet_dec)) {
+        printf("Entrez le masque sous-reseau sous la forme : XXX.XXX.XXX.XXX\n");
+        
+        if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_masque)) {
+            ip3.cidr = maskArrayToCIDR( ip3.octet_masque);
+            ip3.ipClass = classifyIPClass(ip3.octet_dec);
+            ip3.type = classifyIPAddress(ip3.octet_dec); 
+            while (getchar() != '\n'); // Nettoie le buffer d'entrée
+            
+            for (int i = 0; i < 4; i++) {
+                // Mettre le nombre binaire dans la structure
+                ip3.octet_bin[i] = binaire(ip3.octet_dec[i], ip3, i);
+                // Mettre le nombre hexadécimal dans la structure
+                char* hex = hexa(ip3.octet_dec[i]);
+                strcpy(ip3.octet_hex[i], hex);
+                // Libérer la mémoire allouée dynamiquement
+                free(hex); 
+                            
+            }
 
-   
-    printf("Entrez le masque sous-reseau sous la forme : XXX.XXX.XXX.XXX\n");
-    if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_masque)) {
-        
-        ip3.cidr = maskArrayToCIDR( ip3.octet_masque);
-        ip3.ipClass = classifyIPClass(ip3.octet_dec);
-        ip3.type = classifyIPAddress(ip3.octet_dec); 
-        while (getchar() != '\n'); // Nettoie le buffer d'entrée
-        
-        for (int i = 0; i < 4; i++) {
-        // Mettre le nombre binaire dans la structure
-        ip3.octet_bin[i] = binaire(ip3.octet_dec[i], ip3, i);
-        // Mettre le nombre hexadécimal dans la structure
-        char* hex = hexa(ip3.octet_dec[i]);
-        strcpy(ip3.octet_hex[i], hex);
-        // Libérer la mémoire allouée dynamiquement
-        free(hex); 
+            // ecrire dans le fichier fic
+            ecrire_struct(fic,ip3);
+
+            printf("L'adresse IP suivante a ete ajoute au fichier 'ip.txt' :\n");
+            printf(" IPV4: %d.%d.%d.%d /%d\n", ip3.octet_dec[0], ip3.octet_dec[1], ip3.octet_dec[2], ip3.octet_dec[3],ip3.cidr);
+            printf(" Binaire: %08d.%08d.%08d.%08d\n", ip3.octet_bin[0], ip3.octet_bin[1], ip3.octet_bin[2], ip3.octet_bin[3]);
+            printf(" Hexadecimale: %02s.%02s.%02s.%02s\n", ip3.octet_hex[0], ip3.octet_hex[1], ip3.octet_hex[2], ip3.octet_hex[3]);
+            printf(" Masque: %d.%d.%d.%d\n", ip3.octet_masque[0], ip3.octet_masque[1], ip3.octet_masque[2], ip3.octet_masque[3]);
+            printf(" Classe: %c\n", ip3.ipClass);
+            if (ip3.type == 'P') {
+                printf("Adresse IP privee\n");
+            } 
+            else if (ip3.type == 'L') {
+                printf("Adresse IP speciale \n");
+            } 
+            else if (ip3.type == 'O') {
+                printf("Adresse IP publique\n");
+            } 
+            else {
+                printf("Non définie\n");
+            }
+
                         
         }
-
-        // ecrire dans le fichier fic
-        ecrire_struct(fic,ip3);
-
-        printf("L'adresse IP suivante a ete ajoute au fichier 'ip.txt' :\n");
-        printf(" IPV4: %d.%d.%d.%d /%d\n", ip3.octet_dec[0], ip3.octet_dec[1], ip3.octet_dec[2], ip3.octet_dec[3],ip3.cidr);
-        printf(" Binaire: %08d.%08d.%08d.%08d\n", ip3.octet_bin[0], ip3.octet_bin[1], ip3.octet_bin[2], ip3.octet_bin[3]);
-        printf(" Hexadecimale: %02s.%02s.%02s.%02s\n", ip3.octet_hex[0], ip3.octet_hex[1], ip3.octet_hex[2], ip3.octet_hex[3]);
-        printf(" Masque: %d.%d.%d.%d\n", ip3.octet_masque[0], ip3.octet_masque[1], ip3.octet_masque[2], ip3.octet_masque[3]);
-        printf(" Classe: %c\n", ip3.ipClass);
-        if (ip3.type == 'P') {
-            printf("Adresse IP privee\n");
-        } else if (ip3.type == 'L') {
-            printf("Adresse IP speciale \n");
-        } else if (ip3.type == 'O') {
-            printf("Adresse IP publique\n");
-        } else {
-            printf("Non définie\n");
+        else{
+            printf("Masque invalide. Veuillez reessayer.\n");
+        }
+        
+        while (getchar() != '\n'); // Nettoie le buffer d'entrée
+    } 
+    else {
+        printf("Adresse IPv4 invalide. Veuillez reessayer.\n");
+        printf("Adresse IPv4 invalide ou n'appartient pas à la classe A, B ou C. Veuillez reessayer.\n");
+        
         }
 
-                    
-    }
-    else{
-        printf("Masque invalide. Veuillez reessayer.\n");
-    }
-    
-    while (getchar() != '\n'); // Nettoie le buffer d'entrée
-} 
-else {
-    printf("Adresse IPv4 invalide. Veuillez reessayer.\n");
-    printf("Adresse IPv4 invalide ou n'appartient pas à la classe A, B ou C. Veuillez reessayer.\n");
-    }
-
-   
-    fclose(fic); 
-
-    return 0;
+        fclose(fic); 
+        return 0;
 }
 
 
@@ -260,6 +270,7 @@ else {
 void filtrer(){
     // structure entrée par l'utilisateur
     Ip_conv ip3;
+    memset(ip3.octet_bin, 0, sizeof(ip3.octet_bin)); 
     // structure lu dans le fichier 'ip.txt'
     Ip_conv ip;
     int compteur = 1;
@@ -280,6 +291,7 @@ void filtrer(){
     printf("\n\nFiltrage:\n\n");
     printf("Entrez une adresse IPv4 decimale sous la forme : XXX.XXX.XXX.XXX\n");
     if (scanf("%u.%u.%u.%u", &ip3.octet_dec[0], &ip3.octet_dec[1], &ip3.octet_dec[2], &ip3.octet_dec[3]) == 4 && isValidIPv4(ip3.octet_dec)) {
+        ip.type = classifyIPAddress(ip.octet_dec); 
         for (int i = 0; i < 4; i++) {
         // Mettre le nombre binaire dans la structure
         ip3.octet_bin[i] = binaire(ip3.octet_dec[i], ip3, i);
@@ -287,7 +299,6 @@ void filtrer(){
 
    
         printf("Entrez le masque sous-reseau sous la forme : XXX.XXX.XXX.XXX\n");
-        // && isValidMask(ip3.octet_masque)
         if ( scanf("%u.%u.%u.%u", &ip3.octet_masque[0], &ip3.octet_masque[1], &ip3.octet_masque[2], &ip3.octet_masque[3]) == 4 && isValidMask(ip3.octet_masque)) {
             
             ip3.cidr = maskArrayToCIDR( ip3.octet_masque) ;
@@ -296,37 +307,37 @@ void filtrer(){
             
             while(!feof(fic)){
             
-                fscanf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n",
+                fscanf(fic,"%d %d %d %d\n%08d %08d %08d %08d\n%02s %02s %02s %02s\n%d %d %d %d\n%d\n%c\n",
                 &ip.octet_dec[0],&ip.octet_dec[1],&ip.octet_dec[2],&ip.octet_dec[3],
                 &ip.octet_bin[0],&ip.octet_bin[1],&ip.octet_bin[2],&ip.octet_bin[3],
                 ip.octet_hex[0],ip.octet_hex[1],ip.octet_hex[2],ip.octet_hex[3],
-                &ip.octet_masque[0],&ip.octet_masque[1], &ip.octet_masque[2], &ip.octet_masque[3], &ip.cidr);
-
-                // && ip.octet_dec[0] == ip3.octet_dec[0]
+                &ip.octet_masque[0],&ip.octet_masque[1], &ip.octet_masque[2], &ip.octet_masque[3], &ip.cidr,&ip.type);
+                
                 if(ip.cidr == ip3.cidr  ){
                     int cidr = ip.cidr;
                     int octet = 0;
-                    // binaire_Compaire(Ip_conv ip,Ip_conv ip)
                     int res = binaire_Compaire(ip, ip3,cidr,octet);
-                    // printf("Adresse IP %d : ", compteur);
-                    if(res = 1){
-                        printf("Adresse IP %d : ", compteur);
-                        printf("%d.%d.%d.%d /%d\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3],ip.cidr);
-                        compteur++;
-                    }
-
+                    char ip3_octet[9]; // Un tableau de caractères pour stocker la chaîne
+                    char ip_octet[9];
+                
+                
                     
-                                        
-                            
+                    if(res == 1){
+                        printf("Adresse IP %d : ", compteur);
+                        printf("%d.%d.%d.%d /%d\nType:%c\n\n",ip.octet_dec[0],ip.octet_dec[1],ip.octet_dec[2],ip.octet_dec[3],ip.cidr,ip.type);
+                        compteur++;
+                    }          
                 }
                 
 
             }
         
-        }else {
+        }
+        else {
              printf("Masque invalide. Veuillez reessayer.\n");
         }
-    }else {
+    }
+    else {
         printf("Adresse IPv4 invalide. Veuillez reessayer.\n");
         printf("Adresse IPv4 invalide ou n'appartient pas à la classe A, B ou C. Veuillez reessayer.\n");
     }
@@ -337,51 +348,42 @@ void filtrer(){
 int binaire_Compaire(Ip_conv ip, Ip_conv ip3, int cidr, int octet){
     // pour voir si on peut directement comparer un octet(pck sinn comparaison bit par bit)
     if (cidr >= 8){
+
+        char ip3_octet[9]; // Un tableau de caractères pour stocker la chaîne
+        char ip_octet[9];
+        sprintf(ip_octet, "%08d", ip.octet_bin[octet]);        
+        sprintf(ip3_octet, "%08d", ip3.octet_bin[octet]); 
         cidr -= 8;
-        if (ip.octet_bin[octet] == ip3.octet_bin[octet] && cidr == 0 ){
-    
-            printf("\nTRUE : et cidr = 0\n");
-            return 1;    
-            }
-            else if(ip.octet_bin[octet] == ip3.octet_bin[octet] && cidr >= 8){
-              //  printf("\nje rappelle la fonction et cidr = %d\n", cidr);
-                binaire_Compaire(ip,ip3,cidr,octet+1);
-            }
-            else if (ip.octet_bin[octet] == ip3.octet_bin[octet] && cidr < 8)
-            { 
-                octet += 1; // on passe a l'octet suivant
-                // printf("\ncidr = %d donc est inferieur a 8\n", cidr);
-                char ip3_octet[9]; // Un tableau de caractères pour stocker la chaîne
-                char ip_octet[9];
-                
-                
-                sprintf(ip_octet, "%08d", ip.octet_bin[octet]);
-                sprintf(ip3_octet, "%08d", ip3.octet_bin[octet]);
-                
-                // printf("ip_octet: %s\n", ip_octet);
-                // printf("ip3_octet : %s\n", ip3_octet);
-                
-                for (int i = 0; i < cidr; i++) {
-                    if (ip_octet[i] == ip3_octet[i]) {
-                        printf("Tour %d : TRUE << boucle for\n", i);
-                        
-                    } else {
-                        //printf("Tour %d : FALSE<< boucle for\n", i);
-                        return 0; //pour FALSE
-                    }
-                }
-                return 1; // pour TRUE               
-            }
-            else{
-            //printf("\n2 eme if FALSE car dans les octets [0] des struct ne sont pas =\n");
-            return 0;//pour FALSE
+        
+        if (strcmp(ip3_octet, ip_octet) == 0 && cidr == 0) {
+            return 1;
             
+        } 
+        else if (strcmp(ip3_octet, ip_octet) == 0 && cidr >= 8) {
+            return binaire_Compaire(ip, ip3, cidr, octet + 1);
+            
+        } 
+        if (strcmp(ip3_octet, ip_octet) == 0 && cidr < 8) {
+            octet += 1; // on passe à l'octet suivant
+            char ip3_octet[9]; // Un tableau de caractères pour stocker la chaîne
+            char ip_octet[9];
+            sprintf(ip_octet, "%08d", ip.octet_bin[octet]);
+            sprintf(ip3_octet, "%08d", ip3.octet_bin[octet]);
+            for (int i = 0; i < cidr; i++) {
+                if (ip_octet[i] == ip3_octet[i]) {
+                        
+                } 
+                else {
+                    return 0; // pour FALSE
+                }
+            }
+            return 1; // pour TRUE
+        } 
+        else {
+            return 0; // pour FALSE
         }
 
-        
-    }else {
-    printf("Adresse IPv4 invalide. Veuillez reessayer.\n");
-    printf("Adresse IPv4 invalide ou n'appartient pas à la classe A, B ou C. Veuillez reessayer.\n");
+                    
     }
 }
 
